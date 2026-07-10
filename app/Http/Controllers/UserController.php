@@ -129,18 +129,32 @@ class UserController extends Controller
         // Extraemos al usuario inyectado por TokenMongodbMiddleware
         $usuarioActivo = $request->attributes->get('usuario_autenticado');
 
-        // Procesamos la actualización masiva
-        $usuario->update($request->all());
+        // Filtramos los datos para evitar meter basura de FormData a MongoDB
+        $datos = $request->except(['_method', 'foto_perfil']);
 
-        // Crea los datos en la tabla bitacora_cambios - Actualizar
+        if (!empty($request->password)) {
+            $datos['password'] = Hash::make($request->password);
+        } else {
+            unset($datos['password']);
+        }
+
+        // Manejo de la foto de perfil si subieron un archivo nuevo
+        if ($request->hasFile('foto_perfil')) {
+            $file = $request->file('foto_perfil');
+            $path = $file->store('avatars', 'public');
+            $datos['foto_perfil'] = asset('storage/' . $path);
+        }
+
+        $usuario->update($datos);
+
         AuditLog::create([
             'usuario_id' => $usuarioActivo ? $usuarioActivo->_id : null,
             'usuario_nickname' => $usuarioActivo ? $usuarioActivo->usuario : 'sistema',
-            'accion' => 'actualizar_usuario',
+            'accion' => 'ACTUALIZAR USUARIO',
             'modelo_tipo' => 'Usuario',
             'modelo_id' => $usuario->_id,
             'valores_anteriores' => $valoresAnteriores,
-            'valores_nuevos' => $usuario->refresh()->toArray() // Captura del estado en la base NoSQL
+            'valores_nuevos' => $usuario->refresh()->toArray()
         ]);
 
         return response()->json([

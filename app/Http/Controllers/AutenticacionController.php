@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Http; // 🚀 ESTA ERA LA IMPORTACIÓN QUE FALTABA
 
 class AutenticacionController extends Controller
 {
@@ -84,9 +85,13 @@ class AutenticacionController extends Controller
         ], 200);
     }
 
+    /**
+     * POST /api/recuperar-password
+     * * Genera clave temporal en texto plano y dispara el webhook de Make.com
+     */
     public function recuperarPassword(Request $request)
     {
-        // 1. Validar correo electrónico
+        // Validar correo electrónico
         $validator = Validator::make($request->all(), [
             'correo_electronico' => 'required|email',
         ]);
@@ -112,11 +117,11 @@ class AutenticacionController extends Controller
         $nuevaContrasena = 'TEMP' . strtoupper(Str::random(4));
 
         try {
-            // 4. Forzamos a MongoDB a guardar el texto plano saltándose cualquier mutador hash (SHA/Bcrypt)
+            // Forzamos a MongoDB a guardar el texto plano saltándose cualquier mutador hash (SHA/Bcrypt)
             $usuario->update([
-                'password' => $nuevaContrasena
+                'password' => Hash::make($nuevaContrasena)
             ]);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -125,10 +130,11 @@ class AutenticacionController extends Controller
         }
 
         // 5. DISPARAR EL WEBHOOK HACIA MAKE.COM
-        $webhookUrl = 'https://hook.us2.make.com/h5nmyatfga4grvn34mutbgkzw5mt6vsf';
+        $webhookUrl = 'https://hook.us2.make.com/vjhmkgw8w8uh7pgn29w8hromotolhfov';
 
         try {
             $response = Http::post($webhookUrl, [
+                'nombre_completo' => $usuario->nombre_completo,
                 'correo' => $usuario->correo_electronico,
                 'usuario_nickname' => $usuario->usuario ?? 'Usuario',
                 'nueva_contrasena' => $nuevaContrasena,
