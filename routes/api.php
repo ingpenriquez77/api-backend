@@ -20,6 +20,7 @@ Route::get('/estatus', function () {
 
 // Autenticación pública para obtención de Token
 Route::post('/login', [AutenticacionController::class, 'login'])->name('login');
+
 //Recuperar contraseña
 Route::post('/recuperar-password', [AutenticacionController::class, 'recuperarPassword']);
 /*
