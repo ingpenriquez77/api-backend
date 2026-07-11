@@ -13,9 +13,10 @@ class ProductController extends Controller
 {
     /**
      * GET /api/productos
-     * Listar todos los productos formateados para la tabla.
+     * Listar todos los productos formateados de forma óptima para las tablas de Angular.
+     * Mapeado automáticamente por el "index" de apiResource.
      */
-    public function listar(): JsonResponse
+    public function index(): JsonResponse
     {
         $productosRaw = Product::all();
 
@@ -38,11 +39,12 @@ class ProductController extends Controller
 
     /**
      * POST /api/productos
-     * Crear un nuevo producto en la base de datos.
+     * Crear un nuevo producto en la base NoSQL aplicando reglas estrictas de negocio.
+     * Mapeado automáticamente por el "store" de apiResource.
      */
-    public function guardar(Request $request): JsonResponse
+    public function store(Request $request): JsonResponse
     {
-        // Validación estricta de tipos de datos antes del almacenamiento
+        // Validación estricta antes del almacenamiento NoSQL
         $validator = Validator::make($request->all(), [
             'nombre_producto' => 'required|string|max:255',
             'marca' => 'required|string|max:255',
@@ -72,9 +74,10 @@ class ProductController extends Controller
 
     /**
      * GET /api/productos/{id}
-     * Obtener el detalle de un producto específico mediante su ObjectId de MongoDB.
+     * Obtener el detalle pormenorizado de un artículo a través de su ObjectId.
+     * Mapeado automáticamente por el "show" de apiResource.
      */
-    public function mostrar($id): JsonResponse
+    public function show($id): JsonResponse
     {
         $producto = Product::find($id);
 
@@ -97,9 +100,10 @@ class ProductController extends Controller
 
     /**
      * PUT /api/productos/{id}
-     * Modificar un producto existente y registrar el movimiento en la Bitácora de Auditoría.
+     * Modificar datos de un artículo existente y disparar el registro de log de auditoría.
+     * Mapeado automáticamente por el "update" de apiResource.
      */
-    public function actualizar(Request $request, $id): JsonResponse
+    public function update(Request $request, $id): JsonResponse
     {
         $producto = Product::find($id);
 
@@ -107,7 +111,7 @@ class ProductController extends Controller
             return response()->json(['success' => false, 'message' => 'Producto no encontrado'], 404);
         }
 
-        // Se usa 'sometimes' para permitir actualizaciones parciales
+        // Se usa 'sometimes' para soportar actualizaciones parciales desde el cliente
         $validator = Validator::make($request->all(), [
             'nombre_producto' => 'sometimes|required|string|max:255',
             'marca' => 'sometimes|required|string|max:255',
@@ -118,15 +122,16 @@ class ProductController extends Controller
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
+        // Snapshot histórico antes de aplicar la mutación en BD
         $valoresAnteriores = $producto->toArray();
 
-        // Recuperamos el usuario inyectado previamente por el TokenMongodbMiddleware
+        // Recuperamos el usuario inyectado previamente por tu TokenMongodbMiddleware
         $usuarioActivo = $request->attributes->get('usuario_autenticado');
 
-        // Ejecutamos la actualización
+        // Ejecutamos la actualización en la colección
         $producto->update($request->all());
 
-        // Crea los datos en la tabla bitacora_cambios - Actualizar
+        // Automatización de la Bitácora de Auditoría (Efecto Actualizar)
         AuditLog::create([
             'usuario_id' => $usuarioActivo ? $usuarioActivo->_id : null,
             'usuario_nickname' => $usuarioActivo ? $usuarioActivo->usuario : 'sistema',
@@ -146,9 +151,10 @@ class ProductController extends Controller
 
     /**
      * DELETE /api/productos/{id}
-     * Eliminar un producto y guardar el respaldo de los datos eliminados en la Bitácora.
+     * Eliminar físicamente un producto y respaldar su snapshot completo en los logs.
+     * Mapeado automáticamente por el "destroy" de apiResource.
      */
-    public function eliminar(Request $request, $id): JsonResponse
+    public function destroy($id): JsonResponse
     {
         $producto = Product::find($id);
 
@@ -156,12 +162,14 @@ class ProductController extends Controller
             return response()->json(['success' => false, 'message' => 'Producto no encontrado'], 404);
         }
 
-        $usuarioActivo = $request->attributes->get('usuario_autenticado');
+        // Accedemos a la petición global mediante el helper request() para capturar al operador activo
+        $usuarioActivo = request()->attributes->get('usuario_autenticado');
         $valoresAnteriores = $producto->toArray();
 
+        // Remoción del documento
         $producto->delete();
 
-        // Crea los datos en la tabla bitacora_cambios - Eliminar
+        // Automatización de la Bitácora de Auditoría (Efecto Eliminar)
         AuditLog::create([
             'usuario_id' => $usuarioActivo ? $usuarioActivo->_id : null,
             'usuario_nickname' => $usuarioActivo ? $usuarioActivo->usuario : 'sistema',
@@ -180,11 +188,11 @@ class ProductController extends Controller
 
     /**
      * GET /api/auditoria/productos
-     * Recupera el historial de auditoría enfocado únicamente en los cambios de productos.
+     * Ruta personalizada para aislar el log transaccional específico de este módulo.
      */
     public function listarAuditoriaProducto(): JsonResponse
     {
-        // Buscamos solo donde 'modelo_tipo' sea exactamente 'Producto'
+        // Filtramos de forma estricta los documentos cuyo 'modelo_tipo' coincida con este módulo
         $logs = AuditLog::where('modelo_tipo', 'Producto')
                         ->orderBy('created_at', 'desc')
                         ->get();

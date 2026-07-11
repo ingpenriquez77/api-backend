@@ -15,9 +15,10 @@ class UserController extends Controller
 {
     /**
      * GET /api/usuarios
-     * Listar todos los usuarios formateando las dependencias.
+     * Listar todos los usuarios formateando sus dependencias NoSQL.
+     * Mapeado automáticamente por el "index" de apiResource.
      */
-    public function listar(): JsonResponse
+    public function index(): JsonResponse
     {
         $usuariosRaw = User::all();
 
@@ -44,8 +45,9 @@ class UserController extends Controller
     /**
      * POST /api/usuarios
      * Crear un nuevo usuario en la colección NoSQL y guardar la imagen físicamente.
+     * Mapeado automáticamente por el "store" de apiResource.
      */
-    public function guardar(Request $request): JsonResponse
+    public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'usuario' => 'required|string|max:255|unique:users,usuario',
@@ -86,8 +88,9 @@ class UserController extends Controller
     /**
      * GET /api/usuarios/{id}
      * Mostrar información detallada de un usuario por su ObjectId de BD.
+     * Mapeado automáticamente por el "show" de apiResource.
      */
-    public function mostrar($id): JsonResponse
+    public function show($id): JsonResponse
     {
         $usuario = User::find($id);
 
@@ -112,10 +115,11 @@ class UserController extends Controller
     }
 
     /**
-     * POST /api/usuarios/{id}
+     * PUT/POST /api/usuarios/{id}
      * Actualizar los metadatos del usuario e interactuar con la Bitácora de Auditoría.
+     * Mapeado automáticamente por el "update" de apiResource.
      */
-    public function actualizar(Request $request, $id): JsonResponse
+    public function update(Request $request, $id): JsonResponse
     {
         $usuario = User::find($id);
 
@@ -167,8 +171,9 @@ class UserController extends Controller
     /**
      * DELETE /api/usuarios/{id}
      * Eliminar físicamente un registro de usuario y auditar la pérdida de datos.
+     * Mapeado automáticamente por el "destroy" de apiResource.
      */
-    public function eliminar(Request $request, $id): JsonResponse
+    public function destroy($id): JsonResponse
     {
         $usuario = User::find($id);
 
@@ -176,8 +181,8 @@ class UserController extends Controller
             return response()->json(['success' => false, 'message' => 'Usuario no encontrado'], 404);
         }
 
-        //  Snapshot antes de destruir la información
-        $usuarioActivo = $request->attributes->get('usuario_autenticado');
+        // Accedemos a la petición global mediante request() para capturar al operador activo
+        $usuarioActivo = request()->attributes->get('usuario_autenticado');
         $valoresAnteriores = $usuario->toArray();
 
         // Remoción física del documento en BD

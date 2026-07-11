@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Http; // 🚀 ESTA ERA LA IMPORTACIÓN QUE FALTABA
+use Illuminate\Support\Facades\Http;
 
 class AutenticacionController extends Controller
 {
@@ -50,6 +50,12 @@ class AutenticacionController extends Controller
             'api_token' => hash('sha256', $token)
         ]);
 
+        // LOGICA: Extraemos el ID del perfil para consultar sus secciones asignadas
+        $perfilId = is_array($usuario->perfil_ids) ? ($usuario->perfil_ids[0] ?? null) : $usuario->perfil_ids;
+
+        // Buscamos el documento en la colección de perfiles
+        $perfil = \App\Models\Profile::find($perfilId);
+
         // Respuesta estructurada para consumo inmediato en Angular
         return response()->json([
             'success' => true,
@@ -60,7 +66,9 @@ class AutenticacionController extends Controller
                 'nombre_completo' => $usuario->nombre_completo,
                 'usuario' => $usuario->usuario,
                 'perfil_ids' => $usuario->perfil_ids ?? []
-            ]
+            ],
+            // Inyectamos las secciones permitidas reales de MongoDB en la raíz de la respuesta
+            'secciones_permitidas' => $perfil ? $perfil->secciones_permitidas : []
         ], 200);
     }
 
@@ -125,7 +133,7 @@ class AutenticacionController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error al actualizar la credencial en la base de datos NoSQL: ' . $e->getMessage()
+                'message' => 'Error al actualizar la credencial en la base de datos: ' . $e->getMessage()
             ], 500);
         }
 

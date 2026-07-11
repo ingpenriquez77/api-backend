@@ -21,48 +21,41 @@ Route::get('/estatus', function () {
 // Autenticación pública para obtención de Token
 Route::post('/login', [AutenticacionController::class, 'login'])->name('login');
 
-//Recuperar contraseña
+// Recuperar contraseña
 Route::post('/recuperar-password', [AutenticacionController::class, 'recuperarPassword']);
+
 /*
 |--------------------------------------------------------------------------
 | API Protected Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(TokenMongodbMiddleware::class)->group(function () {
+Route::middleware([TokenMongodbMiddleware::class])->group(function () {
 
-    Route::post('/logout', [AutenticacionController::class, 'logout']);
+    // CONTROL DE PRODUCTOS
+    Route::middleware('validar.seccion:productos')->group(function () {
+        Route::apiResource('productos', ProductController::class);
+    });
 
-    /**
-     * CATÁLOGO DE PRODUCTOS (CRUD)
-     */
-    Route::get('/productos', [ProductController::class, 'listar']);
-    Route::post('/productos', [ProductController::class, 'guardar']);
-    Route::get('/productos/{id}', [ProductController::class, 'mostrar']);
-    Route::put('/productos/{id}', [ProductController::class, 'actualizar']);
-    Route::delete('/productos/{id}', [ProductController::class, 'eliminar']);
+    Route::get('usuarios/{usuario}', [UserController::class, 'show']);
+    Route::put('usuarios/{usuario}', [UserController::class, 'update']);
 
-    /**
-     * CATÁLOGO DE PERFILES
-     */
-    Route::get('/perfiles', [ProfileController::class, 'listar']);
-    Route::post('/perfiles', [ProfileController::class, 'guardar']);
-    Route::get('/perfiles/{id}', [ProfileController::class, 'mostrar']);
-    Route::put('/perfiles/{id}', [ProfileController::class, 'actualizar']);
-    Route::delete('/perfiles/{id}', [ProfileController::class, 'eliminar']);
+    // CONTROL GENERAL DE USUARIOS
+    Route::middleware('validar.seccion:usuarios')->group(function () {
+        Route::get('usuarios', [UserController::class, 'index']);
+        Route::post('usuarios', [UserController::class, 'store']);
+        Route::delete('usuarios/{usuario}', [UserController::class, 'destroy']);
+    });
 
-    /**
-     * CATÁLOGO DE USUARIOS
-     */
-    Route::get('/usuarios', [UserController::class, 'listar']);
-    Route::post('/usuarios', [UserController::class, 'guardar']);
-    Route::get('/usuarios/{id}', [UserController::class, 'mostrar']);
-    Route::put('/usuarios/{id}', [UserController::class, 'actualizar']);
-    Route::delete('/usuarios/{id}', [UserController::class, 'eliminar']);
+    // CONTROL DE PERFILES / ROLES
+    Route::middleware('validar.seccion:perfiles')->group(function () {
+        Route::apiResource('perfiles', ProfileController::class);
+    });
 
-    // Modulo de Auditoria (Solo paa revisar los movimientos) - PRODUCTOS
-    Route::get('/auditoria/productos', [ProductController::class, 'listarAuditoriaProducto']);
-    // Modulo de Auditoria (Solo paa revisar los movimientos) - PERFILES
-    Route::get('/auditoria/perfiles', [ProfileController::class, 'listarAuditoriaPerfil']);
-    // Modulo de Auditoria (Solo paa revisar los movimientos) - USUARIOS
-    Route::get('/auditoria/usuarios', [UserController::class, 'listarAuditoriaUsuario']);
+    // BITÁCORA DE AUDITORÍA
+    Route::middleware('validar.seccion:auditoria')->group(function () {
+        Route::get('/auditoria/productos', [ProductController::class, 'listarAuditoriaProducto']);
+        Route::get('/auditoria/perfiles', [ProfileController::class, 'listarAuditoriaPerfil']);
+        Route::get('/auditoria/usuarios', [UserController::class, 'listarAuditoriaUsuario']);
+    });
+
 });
