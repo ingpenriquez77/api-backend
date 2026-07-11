@@ -30,7 +30,7 @@ class TokenMongodbMiddleware
             ], 401);
         }
 
-        // Consulta NoSQL indexada utilizando la firma SHA-256 del token original
+        // Consulta indexada utilizando la firma SHA-256 del token original
         $usuario = User::where('api_token', hash('sha256', $token))->first();
 
         // Control de seguridad: Verificar validez del token en MongoDB

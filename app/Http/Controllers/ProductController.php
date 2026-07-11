@@ -14,7 +14,6 @@ class ProductController extends Controller
     /**
      * GET /api/productos
      * Listar todos los productos formateados de forma óptima para las tablas de Angular.
-     * Mapeado automáticamente por el "index" de apiResource.
      */
     public function index(): JsonResponse
     {
@@ -40,7 +39,6 @@ class ProductController extends Controller
     /**
      * POST /api/productos
      * Crear un nuevo producto en la base NoSQL aplicando reglas estrictas de negocio.
-     * Mapeado automáticamente por el "store" de apiResource.
      */
     public function store(Request $request): JsonResponse
     {
@@ -75,7 +73,6 @@ class ProductController extends Controller
     /**
      * GET /api/productos/{id}
      * Obtener el detalle pormenorizado de un artículo a través de su ObjectId.
-     * Mapeado automáticamente por el "show" de apiResource.
      */
     public function show($id): JsonResponse
     {
@@ -101,7 +98,6 @@ class ProductController extends Controller
     /**
      * PUT /api/productos/{id}
      * Modificar datos de un artículo existente y disparar el registro de log de auditoría.
-     * Mapeado automáticamente por el "update" de apiResource.
      */
     public function update(Request $request, $id): JsonResponse
     {
@@ -152,7 +148,6 @@ class ProductController extends Controller
     /**
      * DELETE /api/productos/{id}
      * Eliminar físicamente un producto y respaldar su snapshot completo en los logs.
-     * Mapeado automáticamente por el "destroy" de apiResource.
      */
     public function destroy($id): JsonResponse
     {

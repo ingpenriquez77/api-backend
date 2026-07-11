@@ -18,7 +18,7 @@ class ValidarSeccionMiddleware
             return response()->json(['success' => false, 'message' => 'No autenticado'], 401);
         }
 
-        // Buscamos el perfil del usuario en MongoDB usando su primer perfil_ids
+        // Buscamos el perfil del usuario en BD usando su primer perfil_ids
         $perfilId = is_array($usuarioActivo->perfil_ids) ? ($usuarioActivo->perfil_ids[0] ?? null) : $usuarioActivo->perfil_ids;
 
         $perfil = Profile::find($perfilId);

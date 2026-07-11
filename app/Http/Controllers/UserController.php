@@ -15,8 +15,7 @@ class UserController extends Controller
 {
     /**
      * GET /api/usuarios
-     * Listar todos los usuarios formateando sus dependencias NoSQL.
-     * Mapeado automáticamente por el "index" de apiResource.
+     * Listar todos los usuarios formateando sus dependencias.
      */
     public function index(): JsonResponse
     {
@@ -45,7 +44,6 @@ class UserController extends Controller
     /**
      * POST /api/usuarios
      * Crear un nuevo usuario en la colección NoSQL y guardar la imagen físicamente.
-     * Mapeado automáticamente por el "store" de apiResource.
      */
     public function store(Request $request): JsonResponse
     {
@@ -88,7 +86,6 @@ class UserController extends Controller
     /**
      * GET /api/usuarios/{id}
      * Mostrar información detallada de un usuario por su ObjectId de BD.
-     * Mapeado automáticamente por el "show" de apiResource.
      */
     public function show($id): JsonResponse
     {
@@ -117,7 +114,6 @@ class UserController extends Controller
     /**
      * PUT/POST /api/usuarios/{id}
      * Actualizar los metadatos del usuario e interactuar con la Bitácora de Auditoría.
-     * Mapeado automáticamente por el "update" de apiResource.
      */
     public function update(Request $request, $id): JsonResponse
     {
@@ -171,7 +167,6 @@ class UserController extends Controller
     /**
      * DELETE /api/usuarios/{id}
      * Eliminar físicamente un registro de usuario y auditar la pérdida de datos.
-     * Mapeado automáticamente por el "destroy" de apiResource.
      */
     public function destroy($id): JsonResponse
     {

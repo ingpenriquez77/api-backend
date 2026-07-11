@@ -41,7 +41,7 @@ class ProfileController extends Controller
      * Crear un nuevo perfil de acceso en el sistema NoSQL.
      * Mapeado automáticamente por el "store" de apiResource.
      */
-    public function store(Request $request): JsonResponse // 👈 Cambiado de guardar a store
+    public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'nombre_perfil' => 'required|string|unique:profiles,nombre_perfil|max:255',
@@ -72,7 +72,7 @@ class ProfileController extends Controller
      * Detalle específico de un perfil de usuario utilizando su ObjectId.
      * Mapeado automáticamente por el "show" de apiResource.
      */
-    public function show($id): JsonResponse // 👈 Cambiado de mostrar a show
+    public function show($id): JsonResponse
     {
         $perfil = Profile::find($id);
 
@@ -97,7 +97,7 @@ class ProfileController extends Controller
      * Actualizar los alcances de un perfil y auditar sus cambios de permisos.
      * Mapeado automáticamente por el "update" de apiResource.
      */
-    public function update(Request $request, $id): JsonResponse // 👈 Cambiado de actualizar a update
+    public function update(Request $request, $id): JsonResponse
     {
         $perfil = Profile::find($id);
 
@@ -141,7 +141,7 @@ class ProfileController extends Controller
      * Remover un perfil de acceso y registrar el rastro completo en la bitácora.
      * Mapeado automáticamente por el "destroy" de apiResource.
      */
-    public function destroy($id): JsonResponse // 👈 Cambiado de eliminar a destroy y removido el Request redundante
+    public function destroy($id): JsonResponse
     {
         $perfil = Profile::find($id);
 

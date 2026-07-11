@@ -31,7 +31,7 @@ class AutenticacionController extends Controller
             ], 422);
         }
 
-        // Búsqueda del usuario en la colección NoSQL
+        // Búsqueda del usuario en la colección
         $usuario = User::where('correo_electronico', $request->correo_electronico)->first();
 
         // Verificación de existencia y coincidencia del hash Bcrypt de la contraseña
@@ -42,7 +42,6 @@ class AutenticacionController extends Controller
             ], 411);
         }
 
-        // Mecanismo de Sesión Nativo MongoDB .
         $token = Str::random(60);
 
         // Almacenamos el token en SHA-256 en la base de datos por seguridad
@@ -67,7 +66,7 @@ class AutenticacionController extends Controller
                 'usuario' => $usuario->usuario,
                 'perfil_ids' => $usuario->perfil_ids ?? []
             ],
-            // Inyectamos las secciones permitidas reales de MongoDB en la raíz de la respuesta
+            // Inyectamos las secciones permitidas reales en la raíz de la respuesta
             'secciones_permitidas' => $perfil ? $perfil->secciones_permitidas : []
         ], 200);
     }
