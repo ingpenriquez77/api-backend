@@ -7,26 +7,24 @@ use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
-use Illuminate\Http\JsonResponse; // <-- Agregamos el soporte para tipado estricto en respuestas API
+use Illuminate\Http\JsonResponse;
 
 class ProfileController extends Controller
 {
     /**
      * GET /api/perfiles
      * Listar todos los perfiles/roles con su mapeo de permisos para Angular.
-     * * @return JsonResponse
+     * Mapeado automáticamente por el "index" de apiResource.
      */
-    public function listar(): JsonResponse
+    public function index(): JsonResponse
     {
         $perfilesRaw = Profile::all();
 
-        // Estructuramos la colección para un consumo óptimo en el Frontend
         $perfiles = $perfilesRaw->map(function ($item) {
             return [
                 'id' => $item->_id,
                 'codigo_perfil' => $item->codigo_perfil,
                 'nombre_perfil' => $item->nombre_perfil,
-                // Garantizamos que retorne un array limpio incluso si el documento está vacío
                 'secciones_permitidas' => $item->secciones_permitidas ?? [],
                 'fecha_creacion' => Carbon::parse($item->created_at)->format('d/m/Y H:i')
             ];
@@ -40,11 +38,11 @@ class ProfileController extends Controller
 
     /**
      * POST /api/perfiles
-     * Crear un nuevo perfil de acceso en el sistema.
+     * Crear un nuevo perfil de acceso en el sistema NoSQL.
+     * Mapeado automáticamente por el "store" de apiResource.
      */
-    public function guardar(Request $request): JsonResponse
+    public function store(Request $request): JsonResponse
     {
-        // Validación para asegurar nombres únicos de perfiles.
         $validator = Validator::make($request->all(), [
             'nombre_perfil' => 'required|string|unique:profiles,nombre_perfil|max:255',
             'secciones_permitidas' => 'required|array',
@@ -71,9 +69,10 @@ class ProfileController extends Controller
 
     /**
      * GET /api/perfiles/{id}
-     * Detalle específico de un perfil.
+     * Detalle específico de un perfil de usuario utilizando su ObjectId.
+     * Mapeado automáticamente por el "show" de apiResource.
      */
-    public function mostrar($id): JsonResponse
+    public function show($id): JsonResponse
     {
         $perfil = Profile::find($id);
 
@@ -96,8 +95,9 @@ class ProfileController extends Controller
     /**
      * PUT /api/perfiles/{id}
      * Actualizar los alcances de un perfil y auditar sus cambios de permisos.
+     * Mapeado automáticamente por el "update" de apiResource.
      */
-    public function actualizar(Request $request, $id): JsonResponse
+    public function update(Request $request, $id): JsonResponse
     {
         $perfil = Profile::find($id);
 
@@ -105,7 +105,6 @@ class ProfileController extends Controller
             return response()->json(['success' => false, 'message' => 'Perfil no encontrado'], 404);
         }
 
-        // Regla única adaptada a MongoDB excluyendo el ObjectId actual de la validación
         $validator = Validator::make($request->all(), [
             'nombre_perfil' => 'sometimes|required|string|max:255|unique:profiles,nombre_perfil,' . $id . ',_id',
             'secciones_permitidas' => 'sometimes|required|array',
@@ -115,16 +114,11 @@ class ProfileController extends Controller
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
-        // Snapshot de los roles y permisos anteriores
         $valoresAnteriores = $perfil->toArray();
-
-        // Extraemos el usuario autenticado provisto por nuestro TokenMongodbMiddleware
         $usuarioActivo = $request->attributes->get('usuario_autenticado');
 
-        // Procesamos la actualización en la BD
         $perfil->update($request->all());
 
-        // Crea los datos en la tabla bitacora_cambios - Actualizar
         AuditLog::create([
             'usuario_id' => $usuarioActivo ? $usuarioActivo->_id : null,
             'usuario_nickname' => $usuarioActivo ? $usuarioActivo->usuario : 'sistema',
@@ -144,9 +138,10 @@ class ProfileController extends Controller
 
     /**
      * DELETE /api/perfiles/{id}
-     * Remover un perfil de acceso y registrar la pérdida del documento.
+     * Remover un perfil de acceso y registrar el rastro completo en la bitácora.
+     * Mapeado automáticamente por el "destroy" de apiResource.
      */
-    public function eliminar(Request $request, $id): JsonResponse
+    public function destroy($id): JsonResponse
     {
         $perfil = Profile::find($id);
 
@@ -154,13 +149,12 @@ class ProfileController extends Controller
             return response()->json(['success' => false, 'message' => 'Perfil no encontrado'], 404);
         }
 
-        // Captura histórica antes del borrado físico
-        $usuarioActivo = $request->attributes->get('usuario_autenticado');
+        // Accedemos a la petición global mediante el helper request() para atrapar el snapshot del operador
+        $usuarioActivo = request()->attributes->get('usuario_autenticado');
         $valoresAnteriores = $perfil->toArray();
 
         $perfil->delete();
 
-        // Crea los datos en la tabla bitacora_cambios - Eliminar
         AuditLog::create([
             'usuario_id' => $usuarioActivo ? $usuarioActivo->_id : null,
             'usuario_nickname' => $usuarioActivo ? $usuarioActivo->usuario : 'sistema',
@@ -183,7 +177,6 @@ class ProfileController extends Controller
      */
     public function listarAuditoriaPerfil(): JsonResponse
     {
-        // 🔍 FILTRO: Buscamos solo donde 'modelo_tipo' sea exactamente 'Perfil'
         $logs = AuditLog::where('modelo_tipo', 'Perfil')
                         ->orderBy('created_at', 'desc')
                         ->get();
