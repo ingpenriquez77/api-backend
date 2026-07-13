@@ -110,15 +110,9 @@ return [
         ],
         // Configuraion necsaria para la conexion de MongoDB
         'mongodb' => [
-            'driver' => 'mongodb',
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', 27017),
+            'driver'   => 'mongodb',
+            'dsn'      => env('DB_URI', 'mongodb://127.0.0.1:27017/prueba_tecnica'),
             'database' => env('DB_DATABASE', 'prueba_tecnica'),
-            'username' => env('DB_USERNAME', ''),
-            'password' => env('DB_PASSWORD', ''),
-            'options' => [
-                'database' => env('DB_AUTHENTICATION_DATABASE', 'admin'),
-            ],
         ],
 
     ],
