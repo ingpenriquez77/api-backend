@@ -46,3 +46,4 @@ EXPOSE 80
 
 # Ejecuta migraciones, llena la base de datos, y luego arranca el servidor
 CMD sh -c "php artisan migrate --seed --force && php artisan serve --host=0.0.0.0 --port=80"
+
