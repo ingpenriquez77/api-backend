@@ -26,8 +26,8 @@ RUN apk add --no-cache \
     $PHPIZE_DEPS \
     && docker-php-ext-install dom xml
 
-# Instalar extensión nativa de MongoDB para PHP de forma correcta en Alpine
-RUN pecl install mongodb && docker-php-ext-enable mongodb
+#  Forzamos la instalación de la versión 1.16.2 para solucionar el error de BSONArray
+RUN pecl install mongodb-1.16.2 && docker-php-ext-enable mongodb
 RUN apk del $PHPIZE_DEPS
 
 WORKDIR /var/www/html
@@ -41,8 +41,8 @@ RUN mkdir -p storage bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# 🎯 AJUSTE RENDER: Cambiamos al puerto 80 que es el estándar que mapea Render
+# Cambiamos al puerto 80 que es el estándar que mapea Render
 EXPOSE 80
 
-# 🚀 SOLUCIÓN: Ejecuta migraciones, llena la base de datos, y luego arranca el servidor
+# Ejecuta migraciones, llena la base de datos, y luego arranca el servidor
 CMD sh -c "php artisan migrate --seed --force && php artisan serve --host=0.0.0.0 --port=80"
