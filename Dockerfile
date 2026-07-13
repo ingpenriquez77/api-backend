@@ -44,5 +44,5 @@ RUN mkdir -p storage bootstrap/cache \
 # 🎯 AJUSTE RENDER: Cambiamos al puerto 80 que es el estándar que mapea Render
 EXPOSE 80
 
-# 🚀 Servidor web en puerto 80
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=80"]
+# 🚀 SOLUCIÓN: Ejecuta migraciones, llena la base de datos, y luego arranca el servidor
+CMD sh -c "php artisan migrate --seed --force && php artisan serve --host=0.0.0.0 --port=80"
